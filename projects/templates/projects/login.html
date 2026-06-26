@@ -1,0 +1,99 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sign In — PMS Nova</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <link rel="stylesheet" href="{% static 'projects/css/style.css' %}">
+</head>
+<body>
+<div class="auth-wrapper">
+    <!-- Decorative grid -->
+    <div style="position:absolute;inset:0;pointer-events:none;overflow:hidden;z-index:0;">
+        <div style="position:absolute;width:1px;height:100%;background:linear-gradient(180deg,transparent,rgba(99,102,241,0.15),transparent);left:20%;top:0;"></div>
+        <div style="position:absolute;width:1px;height:100%;background:linear-gradient(180deg,transparent,rgba(6,182,212,0.1),transparent);right:25%;top:0;"></div>
+        <div style="position:absolute;width:400px;height:400px;border-radius:50%;background:radial-gradient(circle,rgba(99,102,241,0.08),transparent 70%);top:-100px;left:-50px;"></div>
+        <div style="position:absolute;width:300px;height:300px;border-radius:50%;background:radial-gradient(circle,rgba(6,182,212,0.06),transparent 70%);bottom:-80px;right:-30px;"></div>
+    </div>
+
+    <div class="auth-card" style="position:relative;z-index:1;">
+        <!-- Logo -->
+        <div class="auth-logo">
+            <i class="fa-solid fa-layer-group"></i>
+        </div>
+
+        <div class="auth-header">
+            <h2>Welcome back</h2>
+            <p>Sign in to your PMS Nova workspace</p>
+        </div>
+
+        {% if messages %}
+        {% for message in messages %}
+        <div style="background:var(--color-danger-bg);border:1px solid rgba(244,63,94,0.2);border-radius:var(--radius-md);padding:12px 16px;margin-bottom:20px;display:flex;align-items:center;gap:10px;font-size:13px;color:var(--color-danger);">
+            <i class="fa-solid fa-circle-xmark"></i> {{ message }}
+        </div>
+        {% endfor %}
+        {% endif %}
+
+        <form method="post" action="{% url 'login' %}">
+            {% csrf_token %}
+
+            <div class="form-group">
+                <label class="form-label" for="id_username">Username</label>
+                <div style="position:relative;">
+                    <span style="position:absolute;left:14px;top:50%;transform:translateY(-50%);color:var(--text-muted);font-size:13px;pointer-events:none;">
+                        <i class="fa-solid fa-user"></i>
+                    </span>
+                    <input type="text" name="username" id="id_username" class="form-input" placeholder="Enter your username" autocomplete="username" style="padding-left:40px;" required>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="id_password">Password</label>
+                <div style="position:relative;">
+                    <span style="position:absolute;left:14px;top:50%;transform:translateY(-50%);color:var(--text-muted);font-size:13px;pointer-events:none;">
+                        <i class="fa-solid fa-lock"></i>
+                    </span>
+                    <input type="password" name="password" id="id_password" class="form-input" placeholder="Enter your password" autocomplete="current-password" style="padding-left:40px;" required>
+                    <button type="button" id="toggle-pw" style="position:absolute;right:14px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:13px;transition:color 0.15s;">
+                        <i class="fa-solid fa-eye" id="pw-icon"></i>
+                    </button>
+                </div>
+            </div>
+
+            <button type="submit" class="btn btn-primary w-full" style="margin-top:8px;padding:12px;font-size:14px;border-radius:var(--radius-md);">
+                <i class="fa-solid fa-arrow-right-to-bracket"></i> Sign In
+            </button>
+        </form>
+
+        <div style="text-align:center;margin-top:24px;font-size:13px;color:var(--text-muted);">
+            Don't have an account?
+            <a href="{% url 'register' %}" style="font-weight:700;color:var(--brand-primary-light);margin-left:4px;">Create account</a>
+        </div>
+
+        <!-- Version tag -->
+        <div style="text-align:center;margin-top:32px;padding-top:20px;border-top:1px solid var(--border-subtle);">
+            <span style="font-size:10.5px;color:var(--text-muted);font-family:'JetBrains Mono',monospace;">PMS Nova v2.0 &nbsp;·&nbsp; Secure Workspace</span>
+        </div>
+    </div>
+</div>
+
+<script>
+const toggleBtn = document.getElementById('toggle-pw');
+const pwField = document.getElementById('id_password');
+const pwIcon = document.getElementById('pw-icon');
+if (toggleBtn) {
+    toggleBtn.addEventListener('click', () => {
+        const isPassword = pwField.type === 'password';
+        pwField.type = isPassword ? 'text' : 'password';
+        pwIcon.className = isPassword ? 'fa-solid fa-eye-slash' : 'fa-solid fa-eye';
+    });
+}
+</script>
+</body>
+</html>

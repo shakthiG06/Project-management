@@ -1,0 +1,131 @@
+{% extends 'projects/base.html' %}
+{% load static %}
+
+{% block title %}{{ title }} — PMS Nova{% endblock %}
+{% block header_title %}{{ title }}{% endblock %}
+{% block breadcrumb_last %}{{ title }}{% endblock %}
+
+{% block content %}
+<div style="max-width:720px;margin:0 auto;">
+
+    <!-- Page Header -->
+    <div style="display:flex;align-items:center;gap:16px;margin-bottom:28px;">
+        <div style="width:48px;height:48px;border-radius:var(--radius-lg);background:linear-gradient(135deg,var(--brand-primary),var(--brand-accent));display:flex;align-items:center;justify-content:center;font-size:20px;color:white;box-shadow:var(--shadow-glow-primary);">
+            <i class="fa-solid fa-{% if project %}pen-to-square{% else %}folder-plus{% endif %}"></i>
+        </div>
+        <div>
+            <h2 style="font-size:20px;font-weight:800;color:var(--text-primary);">{{ title }}</h2>
+            <p style="font-size:12.5px;color:var(--text-muted);">{% if project %}Update project details and team members{% else %}Set up a new project and assign your team{% endif %}</p>
+        </div>
+    </div>
+
+    <div class="card">
+        <form method="post" id="projectForm">
+            {% csrf_token %}
+
+            <!-- Project Name -->
+            <div class="form-group">
+                <label class="form-label">Project Name</label>
+                {{ form.name }}
+                {% if form.name.errors %}
+                <ul class="form-errors">{% for e in form.name.errors %}<li>{{ e }}</li>{% endfor %}</ul>
+                {% endif %}
+            </div>
+
+            <!-- Description -->
+            <div class="form-group">
+                <label class="form-label">Description</label>
+                {{ form.description }}
+                {% if form.description.errors %}
+                <ul class="form-errors">{% for e in form.description.errors %}<li>{{ e }}</li>{% endfor %}</ul>
+                {% endif %}
+            </div>
+
+            <!-- Date Row -->
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+                <div class="form-group">
+                    <label class="form-label">
+                        <i class="fa-regular fa-calendar-days" style="margin-right:5px;color:var(--brand-primary-light);"></i>Start Date
+                    </label>
+                    {{ form.start_date }}
+                    {% if form.start_date.errors %}
+                    <ul class="form-errors">{% for e in form.start_date.errors %}<li>{{ e }}</li>{% endfor %}</ul>
+                    {% endif %}
+                </div>
+                <div class="form-group">
+                    <label class="form-label">
+                        <i class="fa-regular fa-calendar-check" style="margin-right:5px;color:var(--color-warning);"></i>End Date
+                    </label>
+                    {{ form.end_date }}
+                    {% if form.end_date.errors %}
+                    <ul class="form-errors">{% for e in form.end_date.errors %}<li>{{ e }}</li>{% endfor %}</ul>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Status -->
+            <div class="form-group">
+                <label class="form-label">Project Status</label>
+                {{ form.status }}
+                {% if form.status.errors %}
+                <ul class="form-errors">{% for e in form.status.errors %}<li>{{ e }}</li>{% endfor %}</ul>
+                {% endif %}
+            </div>
+
+            <!-- Members -->
+            <div class="form-group">
+                <label class="form-label">
+                    <i class="fa-solid fa-users" style="margin-right:5px;color:var(--brand-accent-light);"></i>Team Members
+                </label>
+                <p class="form-help" style="margin-bottom:8px;">Hold Ctrl/Cmd to select multiple members.</p>
+                {{ form.members }}
+                {% if form.members.errors %}
+                <ul class="form-errors">{% for e in form.members.errors %}<li>{{ e }}</li>{% endfor %}</ul>
+                {% endif %}
+            </div>
+
+            <div class="form-divider"></div>
+
+            <!-- Actions -->
+            <div style="display:flex;justify-content:flex-end;gap:12px;align-items:center;">
+                <a href="{% if project %}{% url 'project_detail' project.pk %}{% else %}{% url 'dashboard' %}{% endif %}"
+                   class="btn btn-ghost">
+                    <i class="fa-solid fa-xmark"></i> Cancel
+                </a>
+                <button type="submit" class="btn btn-primary" id="createBtn" disabled>
+                    <i class="fa-solid fa-rocket"></i>
+                    Create Project
+                </button>
+            </div>
+        </form>
+</div>
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    const form = document.getElementById("projectForm");
+    const button = document.getElementById("createBtn");
+    const fields = form.querySelectorAll("input, textarea, select");
+
+    function checkForm() {
+        let valid = true;
+
+        fields.forEach(field => {
+            if (field.value.trim() === "") {
+                valid = false;
+            }
+        });
+
+        button.disabled = !valid;
+    }
+
+    fields.forEach(field => {
+        field.addEventListener("input", checkForm);
+        field.addEventListener("change", checkForm);
+    });
+
+    checkForm();
+});
+</script>
+
+{% endblock %}

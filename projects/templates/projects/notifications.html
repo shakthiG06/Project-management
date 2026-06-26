@@ -1,0 +1,59 @@
+{% extends 'projects/base.html' %}
+{% load static %}
+
+{% block title %}Notifications — PMS Nova{% endblock %}
+{% block header_title %}Notifications{% endblock %}
+{% block breadcrumb_last %}Notifications{% endblock %}
+
+{% block content %}
+<div style="max-width:800px;margin:0 auto;">
+
+    <!-- Header Row -->
+    <div class="page-header">
+        <div>
+            <h2 class="page-title">Notification Center</h2>
+            <p class="page-subtitle">
+                <i class="fa-solid fa-bell"></i>
+                {{ notifications.count }} total &nbsp;·&nbsp;
+                {{ notifications.filter.count|default:"–" }} unread
+            </p>
+        </div>
+        <a href="{% url 'notifications_read_all' %}" class="btn btn-secondary btn-sm">
+            <i class="fa-solid fa-check-double"></i> Mark All Read
+        </a>
+    </div>
+
+    <div class="card">
+        {% if notifications %}
+        <div class="notification-list">
+            {% for notif in notifications %}
+            <div class="notification-item {% if not notif.is_read %}unread{% endif %}">
+                <div style="display:flex;align-items:flex-start;gap:14px;flex:1;">
+                    <div style="width:36px;height:36px;border-radius:var(--radius-md);display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;
+                        {% if not notif.is_read %}background:linear-gradient(135deg,rgba(99,102,241,0.2),rgba(6,182,212,0.1));color:var(--brand-primary-light);border:1px solid rgba(99,102,241,0.2);
+                        {% else %}background:var(--bg-elevated);color:var(--text-muted);border:1px solid var(--border-subtle);{% endif %}">
+                        <i class="fa-solid fa-bell{% if notif.is_read %}-slash{% endif %}"></i>
+                    </div>
+                    <div class="notification-body" style="flex:1;">
+                        <p class="notification-msg" style="{% if notif.is_read %}color:var(--text-secondary);{% endif %}">{{ notif.message }}</p>
+                        <span class="notification-time">
+                            <i class="fa-regular fa-clock" style="margin-right:3px;"></i>{{ notif.created_at|timesince }} ago
+                        </span>
+                    </div>
+                </div>
+                {% if not notif.is_read %}
+                <div style="width:8px;height:8px;border-radius:50%;background:var(--brand-primary);box-shadow:0 0 8px var(--brand-primary-glow);flex-shrink:0;margin-top:6px;"></div>
+                {% endif %}
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <div class="empty-state-icon"><i class="fa-solid fa-bell-slash"></i></div>
+            <p class="empty-state-title">Inbox Zero!</p>
+            <p class="empty-state-desc">You have no notifications at this time. We'll let you know when something happens.</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

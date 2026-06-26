@@ -1,0 +1,226 @@
+{% extends 'projects/base.html' %}
+{% load static %}
+
+{% block title %}Analytics & Reports - PMS{% endblock %}
+{% block header_title %}System Analytics{% endblock %}
+
+{% block content %}
+<!-- Metric Cards -->
+<div class="metrics-grid" style="margin-bottom: 24px;">
+    <div class="metric-card">
+        <div class="metric-icon">
+            <i class="fa-solid fa-list-check"></i>
+        </div>
+        <div class="metric-details">
+            <span class="metric-value">{{ total_tasks }}</span>
+            <span class="metric-label">Monitored Tasks</span>
+        </div>
+    </div>
+    
+    <div class="metric-card success">
+        <div class="metric-icon">
+            <i class="fa-solid fa-folder-open"></i>
+        </div>
+        <div class="metric-details">
+            <span class="metric-value">{{ total_projects }}</span>
+            <span class="metric-label">Managed Projects</span>
+        </div>
+    </div>
+</div>
+
+<!-- Charts Row -->
+<div class="reports-grid">
+    <!-- Status Chart -->
+    <div class="card">
+        <div class="card-header">
+            <span class="card-title">
+                <i class="fa-solid fa-chart-pie" style="color: var(--primary);"></i> Task Status Distribution
+            </span>
+        </div>
+        <div class="report-chart-container">
+            <canvas id="statusChart" style="max-height: 250px; max-width: 250px;"></canvas>
+        </div>
+    </div>
+
+    <!-- Priority Chart -->
+    <div class="card">
+        <div class="card-header">
+            <span class="card-title">
+                <i class="fa-solid fa-chart-bar" style="color: var(--accent);"></i> Task Priority Breakdown
+            </span>
+        </div>
+        <div class="report-chart-container">
+            <canvas id="priorityChart" style="max-height: 250px; max-width: 100%;"></canvas>
+        </div>
+    </div>
+</div>
+
+<div class="reports-grid">
+    <!-- Project Completion Table -->
+    <div class="card">
+        <div class="card-header">
+            <span class="card-title">
+                <i class="fa-solid fa-bars-progress" style="color: var(--success);"></i> Project Completion Index
+            </span>
+        </div>
+        
+        {% if project_completion %}
+        <div style="display: flex; flex-direction: column; gap: 16px;">
+            {% for item in project_completion %}
+            <div>
+                <div style="display: flex; justify-content: space-between; font-size: 13px; font-weight: 500; margin-bottom: 6px;">
+                    <span>{{ item.name }}</span>
+                    <span style="color: var(--text-secondary);">{{ item.completed_tasks }}/{{ item.total_tasks }} Tasks &bull; <strong>{{ item.percentage }}%</strong></span>
+                </div>
+                <div class="progress-container" style="height: 8px; margin: 0;">
+                    <div class="progress-bar" style="width: {{ item.percentage }}%;"></div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="empty-state" style="padding: 20px;">
+            <p class="empty-state-title" style="font-size: 14px;">No project data</p>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Contributor Workload Table -->
+    <div class="card">
+        <div class="card-header">
+            <span class="card-title">
+                <i class="fa-solid fa-users" style="color: var(--info);"></i> Contributor Scope Workload
+            </span>
+        </div>
+        
+        {% if members_workload %}
+        <div class="table-responsive">
+            <table class="table-pms" style="font-size: 13px;">
+                <thead>
+                    <tr>
+                        <th>Username</th>
+                        <th>Scope Tasks</th>
+                        <th>Done</th>
+                        <th>Pending</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for member in members_workload %}
+                    <tr>
+                        <td style="font-weight: 600;">{{ member.username }}</td>
+                        <td>{{ member.total }}</td>
+                        <td style="color: var(--success); font-weight: 500;">{{ member.completed }}</td>
+                        <td style="color: var(--warning); font-weight: 500;">{{ member.pending }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="empty-state" style="padding: 20px;">
+            <p class="empty-state-title" style="font-size: 14px;">No workload metrics</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<!-- Include Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Status Chart Data
+        const statusCtx = document.getElementById('statusChart').getContext('2d');
+        const statusChart = new Chart(statusCtx, {
+            type: 'doughnut',
+            data: {
+                labels: ['To Do', 'In Progress', 'Under Review', 'Completed'],
+                datasets: [{
+                    data: [
+                        {{ status_data.todo|default:0 }},
+                        {{ status_data.in_progress|default:0 }},
+                        {{ status_data.review|default:0 }},
+                        {{ status_data.completed|default:0 }}
+                    ],
+                    backgroundColor: [
+                        '#64748b', // Todo (slate)
+                        '#3b82f6', // In Progress (blue)
+                        '#8b5cf6', // Under Review (purple)
+                        '#10b981'  // Completed (green)
+                    ],
+                    borderColor: '#131a2c',
+                    borderWidth: 2
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: {
+                            color: '#94a3b8',
+                            boxWidth: 12,
+                            font: { family: 'Inter', size: 11 }
+                        }
+                    }
+                }
+            }
+        });
+
+        // Priority Chart Data
+        const priorityCtx = document.getElementById('priorityChart').getContext('2d');
+        const priorityChart = new Chart(priorityCtx, {
+            type: 'bar',
+            data: {
+                labels: ['Low', 'Medium', 'High', 'Critical'],
+                datasets: [{
+                    label: 'Tasks Count',
+                    data: [
+                        {{ priority_data.low|default:0 }},
+                        {{ priority_data.medium|default:0 }},
+                        {{ priority_data.high|default:0 }},
+                        {{ priority_data.critical|default:0 }}
+                    ],
+                    backgroundColor: [
+                        'rgba(16, 185, 129, 0.6)',  // Low (green)
+                        'rgba(245, 158, 11, 0.6)',   // Medium (orange)
+                        'rgba(239, 68, 68, 0.6)',    // High (red)
+                        'rgba(239, 68, 68, 0.9)'     // Critical (solid red)
+                    ],
+                    borderColor: [
+                        '#10b981', '#f59e0b', '#ef4444', '#ef4444'
+                    ],
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        grid: { color: 'rgba(255, 255, 255, 0.05)' },
+                        ticks: {
+                            color: '#94a3b8',
+                            stepSize: 1,
+                            font: { family: 'Inter', size: 10 }
+                        }
+                    },
+                    x: {
+                        grid: { display: false },
+                        ticks: {
+                            color: '#94a3b8',
+                            font: { family: 'Inter', size: 11 }
+                        }
+                    }
+                }
+            }
+        });
+    });
+</script>
+{% endblock %}

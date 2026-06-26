@@ -1,0 +1,168 @@
+{% extends 'projects/base.html' %}
+{% load static %}
+
+{% block title %}{{ task.title }} - PMS{% endblock %}
+{% block header_title %}Task Detail{% endblock %}
+
+{% block content %}
+<div style="margin-bottom: 20px;">
+    <a href="{% url 'project_detail' task.project.pk %}" style="font-size: 14px; font-weight: 600;">
+        <i class="fa-solid fa-arrow-left"></i> Back to {{ task.project.name }}
+    </a>
+</div>
+
+<div class="page-header" style="margin-bottom: 24px; align-items: start;">
+    <div>
+        <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
+            <h2 class="page-title">{{ task.title }}</h2>
+            <span class="badge badge-{{ task.status }}">{{ task.get_status_display }}</span>
+            <span class="badge badge-{{ task.priority }}">{{ task.get_priority_display }} Priority</span>
+        </div>
+        <p class="page-subtitle" style="margin-top: 6px;">
+            In Project: <a href="{% url 'project_detail' task.project.pk %}" style="font-weight: 600;">{{ task.project.name }}</a>
+            {% if task.milestone %}
+            &bull; Milestone: <strong>{{ task.milestone.title }}</strong>
+            {% endif %}
+        </p>
+    </div>
+    
+    {% if is_manager %}
+    <a href="{% url 'task_edit' task.pk %}" class="btn btn-secondary btn-sm">
+        <i class="fa-solid fa-pen-to-square"></i> Edit Task
+    </a>
+    {% endif %}
+</div>
+
+<!-- Task Content Grid -->
+<div style="display: grid; grid-template-columns: 2fr 1fr; gap: 24px; align-items: start;">
+    <!-- Main Task info & Comments -->
+    <div>
+        <!-- Description -->
+        <div class="card">
+            <h3 style="font-size: 15px; font-weight: 600; color: var(--text-secondary); margin-bottom: 12px;">Task Description</h3>
+            <p style="font-size: 15px; line-height: 1.6; color: var(--text-primary); white-space: pre-line;">
+                {{ task.description|default:"No description provided for this task." }}
+            </p>
+        </div>
+        
+        <!-- Comments Section -->
+        <div class="comments-section">
+            <h3 style="font-size: 16px; font-weight: 600; margin-bottom: 16px; display: flex; align-items: center; gap: 8px;">
+                <i class="fa-solid fa-comments" style="color: var(--primary);"></i> Discussion Feed ({{ comments.count }})
+            </h3>
+            
+            <!-- Comment Form -->
+            <div class="card comment-form-box">
+                <form method="POST" action="{% url 'comment_add' task.pk %}">
+                    {% csrf_code = None %}
+                    {% csrf_token %}
+                    <div class="form-group" style="margin-bottom: 12px;">
+                        {{ comment_form.content }}
+                    </div>
+                    <div style="display: flex; justify-content: flex-end;">
+                        <button type="submit" class="btn btn-primary btn-sm">
+                            <i class="fa-solid fa-paper-plane"></i> Post Comment
+                        </button>
+                    </div>
+                </form>
+            </div>
+            
+            <!-- Comments Feed -->
+            <div class="comment-feed">
+                {% if comments %}
+                    {% for comment in comments %}
+                    <div class="comment-item">
+                        <div class="user-avatar" style="background-color: {{ comment.user.profile.avatar_color }}; width: 34px; height: 34px; font-size: 12px; flex-shrink: 0;">
+                            {{ comment.user.username|slice:":2" }}
+                        </div>
+                        <div class="comment-bubble">
+                            <div class="comment-meta">
+                                <span class="comment-author">{{ comment.user.username }}</span>
+                                <span class="comment-date">{{ comment.created_at|date:"M d, Y H:i" }}</span>
+                            </div>
+                            <p class="comment-text">{{ comment.content }}</p>
+                        </div>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="empty-state" style="padding: 24px;">
+                        <p class="empty-state-title" style="font-size: 14px;">No comments yet</p>
+                        <p class="empty-state-desc" style="font-size: 12px;">Start the conversation by posting comments above.</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <!-- Meta details sidebar -->
+    <div style="display: flex; flex-direction: column; gap: 24px;">
+        <!-- Status & Assignment -->
+        <div class="card">
+            <h3 style="font-size: 15px; font-weight: 600; margin-bottom: 16px; border-bottom: 1px solid var(--border-glass); padding-bottom: 10px;">
+                Task Settings
+            </h3>
+            
+            <!-- Quick Status Form -->
+            {% if is_manager or is_assignee %}
+            <div class="form-group">
+                <label class="form-label">Update Task Status</label>
+                <form id="task-status-form" method="POST" action="{% url 'task_status_update' task.pk %}">
+                    {% csrf_code = None %}
+                    {% csrf_token %}
+                    <select name="status" class="form-input" onchange="this.form.submit()" style="cursor: pointer;">
+                        {% for code, label in task.STATUS_CHOICES %}
+                        <option value="{{ code }}" {% if task.status == code %}selected{% endif %}>{{ label }}</option>
+                        {% endfor %}
+                    </select>
+                </form>
+            </div>
+            {% else %}
+            <div style="margin-bottom: 16px;">
+                <span class="form-label">Task Status</span>
+                <span class="badge badge-{{ task.status }}">{{ task.get_status_display }}</span>
+            </div>
+            {% endif %}
+            
+            <div style="margin-top: 20px;">
+                <span class="form-label">Assigned Contributor</span>
+                {% if task.assigned_to %}
+                <div style="display: flex; align-items: center; gap: 10px; background-color: rgba(255,255,255,0.02); padding: 10px; border: 1px solid var(--border-glass); border-radius: 8px;">
+                    <div class="user-avatar" style="background-color: {{ task.assigned_to.profile.avatar_color }}; width: 32px; height: 32px; font-size: 11px;">
+                        {{ task.assigned_to.username|slice:":2" }}
+                    </div>
+                    <div>
+                        <div style="font-size: 13px; font-weight: 600; color: var(--text-primary);">{{ task.assigned_to.username }}</div>
+                        <div style="font-size: 10px; color: var(--text-secondary); text-transform: capitalize;">{{ task.assigned_to.profile.get_role_display }}</div>
+                    </div>
+                </div>
+                {% else %}
+                <div style="font-size: 13px; color: var(--text-secondary); font-style: italic;">
+                    Unassigned Task
+                </div>
+                {% endif %}
+            </div>
+            
+            <div style="margin-top: 20px; border-top: 1px solid var(--border-glass); padding-top: 16px; display: flex; flex-direction: column; gap: 12px; font-size: 13px;">
+                <div style="display: flex; justify-content: space-between;">
+                    <span style="color: var(--text-secondary);">Target Due Date</span>
+                    <strong style="color: {% if task.status != 'completed' %}var(--danger){% else %}var(--success){% endif %};">
+                        {{ task.due_date|date:"M d, Y" }}
+                    </strong>
+                </div>
+                <div style="display: flex; justify-content: space-between;">
+                    <span style="color: var(--text-secondary);">Created By</span>
+                    <span>{{ task.created_by.username }}</span>
+                </div>
+                <div style="display: flex; justify-content: space-between;">
+                    <span style="color: var(--text-secondary);">Created Date</span>
+                    <span>{{ task.created_at|date:"M d, Y" }}</span>
+                </div>
+                <div style="display: flex; justify-content: space-between;">
+                    <span style="color: var(--text-secondary);">Last Updated</span>
+                    <span>{{ task.updated_at|date:"M d, Y" }}</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

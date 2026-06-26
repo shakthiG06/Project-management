@@ -1,0 +1,65 @@
+{% extends 'projects/base.html' %}
+{% load static %}
+
+{% block title %}Delete Project — PMS Nova{% endblock %}
+{% block header_title %}Delete Project{% endblock %}
+{% block breadcrumb_last %}Delete{% endblock %}
+
+{% block content %}
+<div style="max-width:540px;margin:40px auto;">
+    <div class="card danger-zone-card">
+
+        <!-- Warning icon -->
+        <div style="text-align:center;margin-bottom:24px;">
+            <div style="width:64px;height:64px;border-radius:var(--radius-xl);background:var(--color-danger-bg);border:1px solid rgba(244,63,94,0.25);display:flex;align-items:center;justify-content:center;font-size:26px;color:var(--color-danger);margin:0 auto 16px;animation:pulse-danger 2s infinite;">
+                <i class="fa-solid fa-triangle-exclamation"></i>
+            </div>
+            <h2 style="font-size:20px;font-weight:800;color:var(--text-primary);margin-bottom:8px;">Confirm Deletion</h2>
+            <p style="font-size:13.5px;color:var(--text-muted);line-height:1.6;">
+                You are about to permanently delete this project.<br>This action <strong style="color:var(--color-danger);">cannot be undone</strong>.
+            </p>
+        </div>
+
+        <!-- Project info box -->
+        <div style="background:var(--bg-elevated);border:1px solid var(--border-default);border-radius:var(--radius-lg);padding:16px 20px;margin-bottom:24px;display:flex;align-items:center;gap:14px;">
+            <div style="width:40px;height:40px;border-radius:var(--radius-md);background:var(--color-danger-bg);border:1px solid rgba(244,63,94,0.2);display:flex;align-items:center;justify-content:center;color:var(--color-danger);font-size:16px;flex-shrink:0;">
+                <i class="fa-solid fa-folder-open"></i>
+            </div>
+            <div>
+                <div style="font-size:15px;font-weight:800;color:var(--text-primary);">{{ project.name }}</div>
+                <div style="font-size:11.5px;color:var(--text-muted);margin-top:2px;">
+                    {{ project.tasks.count }} task{{ project.tasks.count|pluralize }} &nbsp;·&nbsp;
+                    {{ project.members.count }} member{{ project.members.count|pluralize }} &nbsp;·&nbsp;
+                    <span class="badge badge-{{ project.status }}" style="font-size:9px;">{{ project.get_status_display }}</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Warning checklist -->
+        <div style="background:rgba(244,63,94,0.04);border:1px solid rgba(244,63,94,0.12);border-radius:var(--radius-md);padding:14px 18px;margin-bottom:24px;">
+            <p style="font-size:11.5px;font-weight:700;color:var(--color-danger);margin-bottom:10px;text-transform:uppercase;letter-spacing:0.5px;">What will be deleted:</p>
+            <ul style="list-style:none;display:flex;flex-direction:column;gap:7px;">
+                <li style="font-size:12.5px;color:var(--text-secondary);display:flex;align-items:center;gap:8px;">
+                    <i class="fa-solid fa-xmark" style="color:var(--color-danger);font-size:10px;"></i> All tasks and their comments
+                </li>
+                <li style="font-size:12.5px;color:var(--text-secondary);display:flex;align-items:center;gap:8px;">
+                    <i class="fa-solid fa-xmark" style="color:var(--color-danger);font-size:10px;"></i> All milestones
+                </li>
+                <li style="font-size:12.5px;color:var(--text-secondary);display:flex;align-items:center;gap:8px;">
+                    <i class="fa-solid fa-xmark" style="color:var(--color-danger);font-size:10px;"></i> All uploaded documents
+                </li>
+            </ul>
+        </div>
+
+        <form method="post" style="display:flex;gap:12px;justify-content:flex-end;">
+            {% csrf_token %}
+            <a href="{% url 'project_detail' project.pk %}" class="btn btn-ghost">
+                <i class="fa-solid fa-arrow-left"></i> Keep Project
+            </a>
+            <button type="submit" class="btn btn-danger">
+                <i class="fa-solid fa-trash"></i> Yes, Delete Project
+            </button>
+        </form>
+    </div>
+</div>
+{% endblock %}

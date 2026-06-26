@@ -1,0 +1,372 @@
+{% extends 'projects/base.html' %}
+{% load static %}
+
+{% block title %}{{ project.name }} — PMS Nova{% endblock %}
+{% block header_title %}Project Detail{% endblock %}
+{% block breadcrumb_last %}{{ project.name }}{% endblock %}
+
+{% block content %}
+
+<!-- Project Header -->
+<div class="page-header" style="margin-bottom:24px;flex-wrap:wrap;gap:16px;">
+    <div style="display:flex;align-items:flex-start;gap:18px;">
+        <div style="width:52px;height:52px;border-radius:var(--radius-lg);background:linear-gradient(135deg,var(--brand-primary),var(--brand-accent));display:flex;align-items:center;justify-content:center;font-size:22px;color:white;box-shadow:var(--shadow-glow-primary);flex-shrink:0;">
+            <i class="fa-solid fa-folder-open"></i>
+        </div>
+        <div>
+            <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
+                <h2 class="page-title">{{ project.name }}</h2>
+                <span class="badge badge-{{ project.status }}">{{ project.get_status_display }}</span>
+            </div>
+            <p class="page-subtitle">
+                <i class="fa-regular fa-calendar-days"></i>
+                {{ project.start_date|date:"M d, Y" }} &mdash; {{ project.end_date|date:"M d, Y" }}
+                &nbsp;·&nbsp; Manager: <strong style="color:var(--text-primary);">{{ project.manager.username }}</strong>
+            </p>
+        </div>
+    </div>
+    {% if is_manager %}
+    <div style="display:flex;gap:10px;">
+        <a href="{% url 'project_edit' project.pk %}" class="btn btn-secondary btn-sm">
+            <i class="fa-solid fa-pen-to-square"></i> Edit
+        </a>
+        <a href="{% url 'project_delete' project.pk %}" class="btn btn-danger btn-sm">
+            <i class="fa-solid fa-trash"></i> Delete
+        </a>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Overview Stats Row -->
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:14px;margin-bottom:24px;">
+    <!-- Progress -->
+    <div style="background:var(--bg-surface);border:1px solid var(--border-subtle);border-radius:var(--radius-xl);padding:18px 20px;grid-column:span 2;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+            <span style="font-size:12px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.8px;">Overall Progress</span>
+            <span class="progress-text" style="font-size:20px;">{{ progress_percentage }}%</span>
+        </div>
+        <div class="progress-container" style="height:8px;margin:0;">
+            <div class="progress-bar" style="width:{{ progress_percentage }}%;"></div>
+        </div>
+        <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--text-muted);margin-top:8px;">
+            <span>{{ completed_tasks }} completed</span>
+            <span>{{ total_tasks }} total tasks</span>
+        </div>
+    </div>
+
+    <div style="background:var(--bg-surface);border:1px solid var(--border-subtle);border-radius:var(--radius-xl);padding:18px 20px;text-align:center;">
+        <div style="font-size:26px;font-weight:800;color:var(--brand-primary-light);font-family:'JetBrains Mono',monospace;">{{ milestones.count }}</div>
+        <div style="font-size:11px;color:var(--text-muted);font-weight:600;text-transform:uppercase;letter-spacing:0.7px;margin-top:4px;">Milestones</div>
+    </div>
+    <div style="background:var(--bg-surface);border:1px solid var(--border-subtle);border-radius:var(--radius-xl);padding:18px 20px;text-align:center;">
+        <div style="font-size:26px;font-weight:800;color:var(--brand-accent-light);font-family:'JetBrains Mono',monospace;">{{ documents.count }}</div>
+        <div style="font-size:11px;color:var(--text-muted);font-weight:600;text-transform:uppercase;letter-spacing:0.7px;margin-top:4px;">Documents</div>
+    </div>
+    <div style="background:var(--bg-surface);border:1px solid var(--border-subtle);border-radius:var(--radius-xl);padding:18px 20px;text-align:center;">
+        <div style="font-size:26px;font-weight:800;color:var(--brand-violet);font-family:'JetBrains Mono',monospace;">{{ project.members.count }}</div>
+        <div style="font-size:11px;color:var(--text-muted);font-weight:600;text-transform:uppercase;letter-spacing:0.7px;margin-top:4px;">Members</div>
+    </div>
+</div>
+
+<!-- Description -->
+{% if project.description %}
+<div class="card" style="margin-bottom:22px;">
+    <p class="section-label"><i class="fa-solid fa-align-left"></i> Description</p>
+    <p style="font-size:14px;line-height:1.7;color:var(--text-secondary);">{{ project.description }}</p>
+</div>
+{% endif %}
+
+<!-- Tabs -->
+<div class="tabs-container">
+    <nav class="tabs-nav" id="project-tabs">
+        <button class="tab-btn active" data-tab="tasks-tab">
+            <i class="fa-solid fa-list-check"></i> Tasks
+            <span style="background:var(--bg-elevated);border:1px solid var(--border-subtle);border-radius:99px;padding:1px 7px;font-size:10px;margin-left:4px;color:var(--text-muted);">{{ tasks.count }}</span>
+        </button>
+        <button class="tab-btn" data-tab="milestones-tab">
+            <i class="fa-solid fa-flag"></i> Milestones
+            <span style="background:var(--bg-elevated);border:1px solid var(--border-subtle);border-radius:99px;padding:1px 7px;font-size:10px;margin-left:4px;color:var(--text-muted);">{{ milestones.count }}</span>
+        </button>
+        <button class="tab-btn" data-tab="documents-tab">
+            <i class="fa-solid fa-paperclip"></i> Files
+            <span style="background:var(--bg-elevated);border:1px solid var(--border-subtle);border-radius:99px;padding:1px 7px;font-size:10px;margin-left:4px;color:var(--text-muted);">{{ documents.count }}</span>
+        </button>
+        <button class="tab-btn" data-tab="team-tab">
+            <i class="fa-solid fa-users"></i> Team
+        </button>
+    </nav>
+
+    <!-- ── TAB 1: TASKS ── -->
+    <div id="tasks-tab" class="tab-content active">
+        <div class="card">
+            <div class="card-header">
+                <span class="card-title">
+                    <span class="card-title-icon"><i class="fa-solid fa-list-check"></i></span>
+                    Task Scope
+                </span>
+                {% if is_manager %}
+                <a href="{% url 'task_create' project.pk %}" class="btn btn-primary btn-sm">
+                    <i class="fa-solid fa-plus"></i> Add Task
+                </a>
+                {% endif %}
+            </div>
+            {% if tasks %}
+            <div class="table-responsive">
+                <table class="table-pms">
+                    <thead>
+                        <tr>
+                            <th>Task</th>
+                            <th>Milestone</th>
+                            <th>Assignee</th>
+                            <th>Priority</th>
+                            <th>Status</th>
+                            <th>Due Date</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for task in tasks %}
+                        <tr>
+                            <td>
+                                <a href="{% url 'task_detail' task.pk %}" style="font-weight:700;color:var(--text-primary);font-size:13.5px;">
+                                    {{ task.title }}
+                                </a>
+                            </td>
+                            <td style="font-size:12.5px;color:var(--text-muted);">{{ task.milestone.title|default:"—" }}</td>
+                            <td>
+                                {% if task.assigned_to %}
+                                <div style="display:flex;align-items:center;gap:8px;">
+                                    <div class="user-avatar" style="width:26px;height:26px;font-size:9px;border-radius:6px;background:linear-gradient(135deg,{{ task.assigned_to.profile.avatar_color }},{{ task.assigned_to.profile.avatar_color }}99);">
+                                        {{ task.assigned_to.username|slice:":2"|upper }}
+                                    </div>
+                                    <span style="font-size:12.5px;font-weight:600;">{{ task.assigned_to.username }}</span>
+                                </div>
+                                {% else %}
+                                <span style="color:var(--text-muted);font-size:12px;font-style:italic;">Unassigned</span>
+                                {% endif %}
+                            </td>
+                            <td><span class="badge badge-{{ task.priority }}">{{ task.get_priority_display }}</span></td>
+                            <td><span class="badge badge-{{ task.status }}">{{ task.get_status_display }}</span></td>
+                            <td style="font-size:12px;color:var(--text-muted);white-space:nowrap;">
+                                <i class="fa-regular fa-calendar" style="margin-right:4px;"></i>{{ task.due_date|date:"M d, Y" }}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="empty-state">
+                <div class="empty-state-icon"><i class="fa-solid fa-list-check"></i></div>
+                <p class="empty-state-title">No tasks yet</p>
+                <p class="empty-state-desc">No tasks have been created for this project.</p>
+                {% if is_manager %}
+                <a href="{% url 'task_create' project.pk %}" class="btn btn-primary btn-sm">
+                    <i class="fa-solid fa-plus"></i> Add First Task
+                </a>
+                {% endif %}
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- ── TAB 2: MILESTONES ── -->
+    <div id="milestones-tab" class="tab-content">
+        <div class="card">
+            <div class="card-header">
+                <span class="card-title">
+                    <span class="card-title-icon" style="background:linear-gradient(135deg,var(--brand-violet),var(--brand-primary));box-shadow:0 4px 12px rgba(168,85,247,0.3);">
+                        <i class="fa-solid fa-flag"></i>
+                    </span>
+                    Key Milestones
+                </span>
+                {% if is_manager %}
+                <a href="{% url 'milestone_create' project.pk %}" class="btn btn-primary btn-sm">
+                    <i class="fa-solid fa-plus"></i> Add Milestone
+                </a>
+                {% endif %}
+            </div>
+            {% if milestones %}
+            <div style="display:flex;flex-direction:column;gap:10px;">
+                {% for ms in milestones %}
+                <div class="milestone-item">
+                    <div class="milestone-check {% if ms.is_achieved %}achieved{% endif %}">
+                        {% if ms.is_achieved %}
+                        <i class="fa-solid fa-check"></i>
+                        {% else %}
+                        <i class="fa-regular fa-circle"></i>
+                        {% endif %}
+                    </div>
+                    <div style="flex:1;">
+                        <div style="font-size:14px;font-weight:700;color:var(--text-primary);{% if ms.is_achieved %}text-decoration:line-through;opacity:0.6;{% endif %}">
+                            {{ ms.title }}
+                        </div>
+                        {% if ms.description %}
+                        <div style="font-size:12px;color:var(--text-muted);margin-top:2px;">{{ ms.description }}</div>
+                        {% endif %}
+                    </div>
+                    <div style="display:flex;align-items:center;gap:12px;flex-shrink:0;">
+                        <div style="text-align:right;">
+                            <div style="font-size:11px;color:var(--text-muted);">Due</div>
+                            <div style="font-size:12.5px;font-weight:700;color:var(--text-secondary);">{{ ms.due_date|date:"M d, Y" }}</div>
+                        </div>
+                        {% if ms.is_achieved %}
+                        <span class="badge badge-completed">Achieved</span>
+                        {% else %}
+                        <span class="badge badge-todo">Pending</span>
+                        {% endif %}
+                        {% if is_manager %}
+                        <form method="POST" action="{% url 'milestone_toggle' project.pk ms.pk %}" style="display:inline;">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-secondary btn-sm">
+                                {% if ms.is_achieved %}<i class="fa-solid fa-rotate-left"></i>{% else %}<i class="fa-solid fa-check"></i>{% endif %}
+                            </button>
+                        </form>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="empty-state">
+                <div class="empty-state-icon"><i class="fa-solid fa-flag"></i></div>
+                <p class="empty-state-title">No milestones yet</p>
+                <p class="empty-state-desc">Define project milestones to track key deliverables.</p>
+                {% if is_manager %}
+                <a href="{% url 'milestone_create' project.pk %}" class="btn btn-primary btn-sm">Add Milestone</a>
+                {% endif %}
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- ── TAB 3: DOCUMENTS ── -->
+    <div id="documents-tab" class="tab-content">
+        <div style="display:grid;grid-template-columns:280px 1fr;gap:20px;align-items:start;">
+            <!-- Upload -->
+            <div class="card">
+                <p class="section-label"><i class="fa-solid fa-cloud-arrow-up"></i> Upload File</p>
+                <form method="POST" action="{% url 'document_upload' project.pk %}" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    <div class="form-group">
+                        <label class="form-label">Document Title</label>
+                        {{ document_form.title }}
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Choose File</label>
+                        {{ document_form.file }}
+                    </div>
+                    <button type="submit" class="btn btn-accent w-full" style="margin-top:10px;">
+                        <i class="fa-solid fa-cloud-arrow-up"></i> Upload
+                    </button>
+                </form>
+            </div>
+
+            <!-- List -->
+            <div class="card">
+                <div class="card-header">
+                    <span class="card-title">
+                        <span class="card-title-icon" style="background:linear-gradient(135deg,#f59e0b,#d97706);box-shadow:0 4px 12px rgba(245,158,11,0.3);">
+                            <i class="fa-solid fa-paperclip"></i>
+                        </span>
+                        Shared Resources
+                    </span>
+                </div>
+                {% if documents %}
+                <div style="display:flex;flex-direction:column;gap:10px;">
+                    {% for doc in documents %}
+                    <div class="doc-item">
+                        <div style="display:flex;align-items:center;gap:12px;flex:1;overflow:hidden;">
+                            <div class="doc-icon"><i class="fa-solid fa-file-lines"></i></div>
+                            <div style="overflow:hidden;">
+                                <div style="font-size:13.5px;font-weight:700;color:var(--text-primary);white-space:nowrap;text-overflow:ellipsis;overflow:hidden;">{{ doc.title }}</div>
+                                <div style="font-size:11px;color:var(--text-muted);">
+                                    <i class="fa-regular fa-user" style="margin-right:3px;"></i>{{ doc.uploaded_by.username }}
+                                    &nbsp;·&nbsp; {{ doc.uploaded_at|date:"M d, Y" }}
+                                </div>
+                            </div>
+                        </div>
+                        <div style="display:flex;gap:8px;flex-shrink:0;margin-left:12px;">
+                            <a href="{{ doc.file.url }}" target="_blank" download class="btn btn-secondary btn-sm">
+                                <i class="fa-solid fa-download"></i>
+                            </a>
+                            {% if is_manager or doc.uploaded_by == request.user %}
+                            <a href="{% url 'document_delete' project.pk doc.pk %}"
+                               class="btn btn-danger btn-sm"
+                               onclick="return confirm('Delete this document?')">
+                                <i class="fa-solid fa-trash-can"></i>
+                            </a>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="empty-state" style="padding:28px;">
+                    <div class="empty-state-icon"><i class="fa-solid fa-folder-open"></i></div>
+                    <p class="empty-state-title" style="font-size:14px;">No files yet</p>
+                    <p class="empty-state-desc" style="font-size:12px;">Upload specs, wireframes, or references.</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- ── TAB 4: TEAM ── -->
+    <div id="team-tab" class="tab-content">
+        <div class="card">
+            <div class="card-header">
+                <span class="card-title">
+                    <span class="card-title-icon" style="background:linear-gradient(135deg,var(--brand-accent),#0891b2);box-shadow:0 4px 12px rgba(6,182,212,0.3);">
+                        <i class="fa-solid fa-users"></i>
+                    </span>
+                    Project Contributors
+                </span>
+            </div>
+            <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:14px;">
+                <!-- Manager -->
+                <div style="background:linear-gradient(135deg,rgba(99,102,241,0.08),var(--bg-elevated));border:1px solid rgba(99,102,241,0.2);border-radius:var(--radius-lg);padding:18px;display:flex;align-items:center;gap:14px;position:relative;">
+                    <div class="user-avatar" style="width:44px;height:44px;font-size:16px;border-radius:10px;background:linear-gradient(135deg,{{ project.manager.profile.avatar_color }},{{ project.manager.profile.avatar_color }}99);">
+                        {{ project.manager.username|slice:":2"|upper }}
+                    </div>
+                    <div>
+                        <div style="font-size:14px;font-weight:800;color:var(--text-primary);">{{ project.manager.username }}</div>
+                        <div style="font-size:11px;color:var(--brand-primary-light);font-weight:700;margin-top:2px;">Project Lead</div>
+                    </div>
+                    <span style="position:absolute;top:10px;right:12px;font-size:9px;background:rgba(99,102,241,0.2);color:var(--brand-primary-light);padding:2px 7px;border-radius:99px;font-weight:800;text-transform:uppercase;letter-spacing:0.5px;">Lead</span>
+                </div>
+
+                {% for member in project.members.all %}
+                <div style="background:var(--bg-elevated);border:1px solid var(--border-subtle);border-radius:var(--radius-lg);padding:18px;display:flex;align-items:center;gap:14px;transition:border-color 0.15s;">
+                    <div class="user-avatar" style="width:44px;height:44px;font-size:16px;border-radius:10px;background:linear-gradient(135deg,{{ member.profile.avatar_color }},{{ member.profile.avatar_color }}99);">
+                        {{ member.username|slice:":2"|upper }}
+                    </div>
+                    <div>
+                        <div style="font-size:14px;font-weight:700;color:var(--text-primary);">{{ member.username }}</div>
+                        <div style="font-size:11px;color:var(--text-muted);margin-top:2px;">{{ member.profile.get_role_display }}</div>
+                    </div>
+                </div>
+                {% empty %}
+                <div style="grid-column:1/-1;color:var(--text-muted);font-size:13px;text-align:center;padding:20px 0;">No team members assigned yet.</div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const tabs = document.querySelectorAll('.tab-btn');
+    const contents = document.querySelectorAll('.tab-content');
+    tabs.forEach(tab => {
+        tab.addEventListener('click', () => {
+            tabs.forEach(t => t.classList.remove('active'));
+            contents.forEach(c => c.classList.remove('active'));
+            tab.classList.add('active');
+            document.getElementById(tab.getAttribute('data-tab')).classList.add('active');
+        });
+    });
+});
+</script>
+{% endblock %}
