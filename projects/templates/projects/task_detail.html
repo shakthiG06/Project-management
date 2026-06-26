@@ -54,7 +54,6 @@
             <!-- Comment Form -->
             <div class="card comment-form-box">
                 <form method="POST" action="{% url 'comment_add' task.pk %}">
-                    {% csrf_code = None %}
                     {% csrf_token %}
                     <div class="form-group" style="margin-bottom: 12px;">
                         {{ comment_form.content }}
@@ -107,7 +106,6 @@
             <div class="form-group">
                 <label class="form-label">Update Task Status</label>
                 <form id="task-status-form" method="POST" action="{% url 'task_status_update' task.pk %}">
-                    {% csrf_code = None %}
                     {% csrf_token %}
                     <select name="status" class="form-input" onchange="this.form.submit()" style="cursor: pointer;">
                         {% for code, label in task.STATUS_CHOICES %}

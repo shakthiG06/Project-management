@@ -78,18 +78,30 @@ def logout_view(request):
 @login_required
 def dashboard(request):
     profile = get_object_or_404(Profile, user=request.user)
+    query = request.GET.get('q', '')
     
     # Filter projects based on role
     if profile.role == 'manager':
         projects = Project.objects.filter(manager=request.user).order_by('-created_at')
     else:
         projects = Project.objects.filter(members=request.user).order_by('-created_at')
+    if query:
+        projects= projects.filter(
+        Q(name__icontains=query) |
+        Q(description__icontains=query)
+    )
         
     # Get active tasks in user's projects
     if profile.role == 'manager':
         tasks = Task.objects.filter(project__manager=request.user).order_by('-updated_at')
     else:
         tasks = Task.objects.filter(project__members=request.user).order_by('-updated_at')
+
+    if query:
+        tasks = tasks.filter(
+        Q(title__icontains=query) |
+        Q(description__icontains=query)
+    )
         
     assigned_tasks = Task.objects.filter(assigned_to=request.user).order_by('due_date')
     
@@ -118,6 +130,7 @@ def dashboard(request):
         'unread_notifications': unread_notifications[:5],
         'unread_count': unread_count,
         'recent_tasks': recent_tasks,
+        'query': query,
     }
     return render(request, 'projects/dashboard.html', context)
 

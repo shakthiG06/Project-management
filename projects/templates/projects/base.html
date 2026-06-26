@@ -41,13 +41,13 @@
         <ul class="sidebar-menu">
             <li class="sidebar-item {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">
                 <a href="{% url 'dashboard' %}">
-                    <span class="nav-icon"><i class="fa-solid fa-chart-treemap"></i></span>
+                    <span class="nav-icon"><i class="fa-solid fa-gauge-high"></i></span>
                     <span>Dashboard</span>
                 </a>
             </li>
             <li class="sidebar-item {% if request.resolver_match.url_name == 'reports_view' %}active{% endif %}">
                 <a href="{% url 'reports_view' %}">
-                    <span class="nav-icon"><i class="fa-solid fa-chart-mixed"></i></span>
+                    <span class="nav-icon"><i class="fa-solid fa-chart-line"></i></span>
                     <span>Analytics</span>
                 </a>
             </li>
@@ -103,11 +103,19 @@
                 </span>
             </div>
             <div class="header-actions">
-                <div class="header-search">
+                <form class="header-search" method="GET" action="{% url 'dashboard' %}">
                     <i class="fa-solid fa-magnifying-glass" style="font-size:12px;"></i>
-                    <span>Quick Search…</span>
-                    <span style="margin-left:auto; background:var(--bg-surface); border:1px solid var(--border-subtle); border-radius:4px; padding:1px 6px; font-size:10px; color:var(--text-muted);">⌘K</span>
-                </div>
+                    <input 
+                        type="text"
+                        name="q"
+                        value="{{ request.GET.q }}"
+                        placeholder="Quick Search..."
+                        style="background:transparent;border:none;outline:none;flex:1;color:white;padding-left:8px;">
+                    <button type="submit"
+                            style="background:none;border:none;color:var(--text-muted);cursor:pointer;">
+                    <i class="fa-solid fa-arrow-right"></i>
+                    </button>
+                </form>
                 <a href="{% url 'notifications_list' %}" class="notification-bell" id="notif-bell-btn">
                     <i class="fa-solid fa-bell"></i>
                     {% if request.user.notifications.all %}
