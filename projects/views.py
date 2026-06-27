@@ -265,8 +265,11 @@ def milestone_toggle(request, project_id, milestone_id):
     status_str = "achieved" if milestone.is_achieved else "not achieved"
     # Notify members
     for member in project.members.all():
-        create_notification(member, f"Milestone '{milestone.title}' status updated to {status_str} in '{project.name}'.")
-        
+        create_notification(
+            member,
+            f"Milestone '{milestone.title}' status updated to {status_str} in '{project.name}'."
+        )
+
     messages.success(request, f"Milestone status updated to {status_str}.")
     return redirect('project_detail', pk=project.pk)
 
