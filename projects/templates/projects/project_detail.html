@@ -210,17 +210,43 @@
                             <div style="font-size:12.5px;font-weight:700;color:var(--text-secondary);">{{ ms.due_date|date:"M d, Y" }}</div>
                         </div>
                         {% if ms.is_achieved %}
-                        <span class="badge badge-completed">Achieved</span>
+                            <span class="badge badge-completed">Achieved</span>
                         {% else %}
-                        <span class="badge badge-todo">Pending</span>
+                            <span class="badge badge-todo">Pending</span>
                         {% endif %}
                         {% if is_manager %}
-                        <form method="POST" action="{% url 'milestone_toggle' project.pk ms.pk %}" style="display:inline;">
+
+                        <!-- Toggle -->
+                        <form method="POST"
+                            action="{% url 'milestone_toggle' project.pk ms.pk %}"
+                            style="display:inline;">
                             {% csrf_token %}
                             <button type="submit" class="btn btn-secondary btn-sm">
-                                {% if ms.is_achieved %}<i class="fa-solid fa-rotate-left"></i>{% else %}<i class="fa-solid fa-check"></i>{% endif %}
+                                {% if ms.is_achieved %}
+                                    <i class="fa-solid fa-rotate-left"></i>
+                                {% else %}
+                                    <i class="fa-solid fa-check"></i>
+                                {% endif %}
                             </button>
                         </form>
+
+                        <!-- Edit -->
+                        <a href="{% url 'milestone_edit' project.pk ms.pk %}"
+                        class="btn btn-primary btn-sm">
+                            <i class="fa-solid fa-pen"></i>
+                        </a>
+
+                        <!-- Delete -->
+                        <form method="POST"
+                            action="{% url 'milestone_delete' project.pk ms.pk %}"
+                            style="display:inline;"
+                            onsubmit="return confirm('Delete this milestone?');">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-danger btn-sm">
+                                <i class="fa-solid fa-trash"></i>
+                            </button>
+                        </form>
+
                         {% endif %}
                     </div>
                 </div>

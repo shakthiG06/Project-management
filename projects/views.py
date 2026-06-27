@@ -224,45 +224,121 @@ def project_delete(request, pk):
         return redirect('dashboard')
     return render(request, 'projects/project_confirm_delete.html', {'project': project})
 
+# =========================
 # Milestone Views
+# =========================
+
 @login_required
 @manager_required
 def milestone_create(request, pk):
     project = get_object_or_404(Project, pk=pk)
+
     if project.manager != request.user:
         messages.error(request, "Permission Denied: You are not the manager of this project.")
         return redirect('dashboard')
-        
+
     if request.method == 'POST':
         form = MilestoneForm(request.POST)
         if form.is_valid():
             milestone = form.save(commit=False)
             milestone.project = project
             milestone.save()
-            
+
             # Notify members
             for member in project.members.all():
-                create_notification(member, f"New milestone '{milestone.title}' added to project '{project.name}'.")
-                
+                create_notification(
+                    member,
+                    f"New milestone '{milestone.title}' added to project '{project.name}'."
+                )
+
             messages.success(request, f"Milestone '{milestone.title}' created successfully!")
             return redirect('project_detail', pk=project.pk)
     else:
         form = MilestoneForm()
-    return render(request, 'projects/milestone_form.html', {'form': form, 'project': project})
+
+    return render(request, 'projects/milestone_form.html', {
+        'form': form,
+        'project': project,
+        'title': 'Add Milestone'
+    })
+
+
+@login_required
+@manager_required
+def milestone_edit(request, project_id, milestone_id):
+    project = get_object_or_404(Project, pk=project_id)
+
+    if project.manager != request.user:
+        messages.error(request, "Permission Denied.")
+        return redirect('dashboard')
+
+    milestone = get_object_or_404(
+        Milestone,
+        pk=milestone_id,
+        project=project
+    )
+
+    if request.method == "POST":
+        form = MilestoneForm(request.POST, instance=milestone)
+
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Milestone updated successfully!")
+            return redirect('project_detail', pk=project.pk)
+
+    else:
+        form = MilestoneForm(instance=milestone)
+
+    return render(request, 'projects/milestone_form.html', {
+        'form': form,
+        'project': project,
+        'title': 'Edit Milestone',
+        'milestone': milestone
+    })
+
+
+@login_required
+@manager_required
+def milestone_delete(request, project_id, milestone_id):
+    project = get_object_or_404(Project, pk=project_id)
+
+    if project.manager != request.user:
+        messages.error(request, "Permission Denied.")
+        return redirect('dashboard')
+
+    milestone = get_object_or_404(
+        Milestone,
+        pk=milestone_id,
+        project=project
+    )
+
+    if request.method == "POST":
+        milestone.delete()
+        messages.success(request, "Milestone deleted successfully!")
+
+    return redirect('project_detail', pk=project.pk)
+
 
 @login_required
 @manager_required
 def milestone_toggle(request, project_id, milestone_id):
     project = get_object_or_404(Project, pk=project_id)
+
     if project.manager != request.user:
         messages.error(request, "Permission Denied.")
         return redirect('dashboard')
-        
-    milestone = get_object_or_404(Milestone, pk=milestone_id, project=project)
+
+    milestone = get_object_or_404(
+        Milestone,
+        pk=milestone_id,
+        project=project
+    )
+
     milestone.is_achieved = not milestone.is_achieved
     milestone.save()
-    
+
     status_str = "achieved" if milestone.is_achieved else "not achieved"
+
     # Notify members
     for member in project.members.all():
         create_notification(
@@ -272,6 +348,7 @@ def milestone_toggle(request, project_id, milestone_id):
 
     messages.success(request, f"Milestone status updated to {status_str}.")
     return redirect('project_detail', pk=project.pk)
+
 
 # Task Views
 @login_required
@@ -365,6 +442,21 @@ def task_status_update(request, pk):
             old_status = task.get_status_display()
             task.status = new_status
             task.save()
+            # Automatically update milestone status
+            if task.milestone:
+                milestone = task.milestone
+
+                total_tasks = milestone.tasks.count()
+                completed_tasks = milestone.tasks.filter(status='completed').count()
+
+                if total_tasks > 0 and completed_tasks == total_tasks:
+                    milestone.is_achieved = True
+
+            
+                else:
+                    milestone.is_achieved = False
+
+                milestone.save()
             
             # Notify relevant party
             status_display = task.get_status_display()

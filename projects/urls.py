@@ -20,6 +20,8 @@ urlpatterns = [
     # Milestone urls
     path('projects/<int:pk>/milestone/new/', views.milestone_create, name='milestone_create'),
     path('projects/<int:project_id>/milestone/<int:milestone_id>/toggle/', views.milestone_toggle, name='milestone_toggle'),
+    path('projects/<int:project_id>/milestone/<int:milestone_id>/edit/', views.milestone_edit, name='milestone_edit'),
+    path('projects/<int:project_id>/milestone/<int:milestone_id>/delete/', views.milestone_delete, name='milestone_delete'),
     
     # Document urls
     path('projects/<int:pk>/document/upload/', views.document_upload, name='document_upload'),
